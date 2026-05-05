@@ -227,23 +227,45 @@ local function updateList()
         ListLbl.Text = table.concat(ITEM_NAMES, "\n")
     end
 end
-
--- ============ ลาก GUI ============
+-- ============ ลาก GUI (กันหลุดขอบจอ) ============
 local dragging, dragStart, startPos
+local camera = workspace.CurrentCamera
+
 TitleBar.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true dragStart = inp.Position startPos = Frame.Position
+        dragging   = true
+        dragStart  = inp.Position
+        startPos   = Frame.Position
     end
 end)
+
 UIS.InputChanged:Connect(function(inp)
-    if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = inp.Position - dragStart
-        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    if not dragging then return end
+    if inp.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+
+    local d       = inp.Position - dragStart
+    local screenX = camera.ViewportSize.X
+    local screenY = camera.ViewportSize.Y
+    local sizeX   = Frame.AbsoluteSize.X
+    local sizeY   = Frame.AbsoluteSize.Y
+
+    -- คำนวณตำแหน่งใหม่
+    local newX = startPos.X.Offset + d.X
+    local newY = startPos.Y.Offset + d.Y
+
+    -- จำกัดไม่ให้เกินขอบจอ
+    newX = math.clamp(newX, 0, screenX - sizeX)
+    newY = math.clamp(newY, 0, screenY - sizeY)
+
+    Frame.Position = UDim2.new(0, newX, 0, newY)
+end)
+
+UIS.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
     end
 end)
-UIS.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
+
 
 -- ============ ย่อ/ขยาย ============
 local minimized = true
