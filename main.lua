@@ -201,31 +201,52 @@ BtnClearList.BorderSizePixel = 0
 BtnClearList.Parent = Content
 Instance.new("UICorner", BtnClearList).CornerRadius = UDim.new(0, 6)
 
--- ============ ลาก GUI (กันหลุดขอบจอ) ============
-local dragging, dragStart, startPos
+-- ============ ลาก GUI (รองรับมือถือ + PC) ============
+local dragging = false
+local dragStartPos = nil
+local frameStartPos = nil
 local camera = workspace.CurrentCamera
 
+local function onDragStart(pos)
+    dragging = true
+    dragStartPos = pos
+    frameStartPos = Frame.Position
+end
+
+local function onDragMove(pos)
+    if not dragging then return end
+    local d = pos - dragStartPos
+    local sx = camera.ViewportSize.X
+    local sy = camera.ViewportSize.Y
+    local nx = math.clamp(frameStartPos.X.Offset + d.X, 0, sx - Frame.AbsoluteSize.X)
+    local ny = math.clamp(frameStartPos.Y.Offset + d.Y, 0, sy - Frame.AbsoluteSize.Y)
+    Frame.Position = UDim2.new(0, nx, 0, ny)
+end
+
+local function onDragEnd()
+    dragging = false
+end
+
+-- รองรับทั้ง PC (Mouse) และมือถือ (Touch)
 TitleBar.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging  = true
-        dragStart = inp.Position
-        startPos  = Frame.Position
+    if inp.UserInputType == Enum.UserInputType.MouseButton1
+    or inp.UserInputType == Enum.UserInputType.Touch then
+        onDragStart(inp.Position)
     end
 end)
 
-UIS.InputChanged:Connect(function(inp)
-    if not dragging then return end
-    if inp.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-    local d  = inp.Position - dragStart
-    local sx = camera.ViewportSize.X
-    local sy = camera.ViewportSize.Y
-    local nx = math.clamp(startPos.X.Offset + d.X, 0, sx - Frame.AbsoluteSize.X)
-    local ny = math.clamp(startPos.Y.Offset + d.Y, 0, sy - Frame.AbsoluteSize.Y)
-    Frame.Position = UDim2.new(0, nx, 0, ny)
+TitleBar.InputChanged:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseMovement
+    or inp.UserInputType == Enum.UserInputType.Touch then
+        onDragMove(inp.Position)
+    end
 end)
 
-UIS.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+TitleBar.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1
+    or inp.UserInputType == Enum.UserInputType.Touch then
+        onDragEnd()
+    end
 end)
 
 -- ============ ย่อ/ขยาย ============
@@ -309,6 +330,7 @@ BtnScan.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ============ หาของทุกชิ้น ============
 local function getAllItems()
     local list = {}
     for _, obj in ipairs(workspace:GetDescendants()) do
@@ -333,23 +355,60 @@ local function getAllItems()
     return list
 end
 
+-- ============ เก็บของ (รองรับหลายวิธี) ============
 local function collectOne(item)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    char.HumanoidRootPart.CFrame = CFrame.new(item.pos + Vector3.new(0, 3, 0))
-    task.wait(0.15)
+
+    -- วาปชิดมากๆ
+    char.HumanoidRootPart.CFrame = CFrame.new(item.pos + Vector3.new(0, 2, 0))
+    task.wait(0.2)
+
+    -- วิธีที่ 1: ProximityPrompt
+    local collected = false
     local function tryPrompt(obj)
         for _, v in ipairs(obj:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then fireproximityprompt(v) return true end
+            if v:IsA("ProximityPrompt") then
+                pcall(function() fireproximityprompt(v) end)
+                collected = true
+                return true
+            end
         end
         return false
     end
-    if not tryPrompt(item.obj) and item.obj.Parent then tryPrompt(item.obj.Parent) end
+
+    if not tryPrompt(item.obj) then
+        if item.obj.Parent then tryPrompt(item.obj.Parent) end
+    end
+
+    -- วิธีที่ 2: แตะ TouchInterest
+    if not collected then
+        for _, v in ipairs(item.obj:GetDescendants()) do
+            if v:IsA("TouchTransmitter") then
+                pcall(function() firetouchinterest(char.HumanoidRootPart, item.obj, 0) end)
+                collected = true
+                break
+            end
+        end
+    end
+
+    -- วิธีที่ 3: ClickDetector
+    if not collected then
+        for _, v in ipairs(item.obj:GetDescendants()) do
+            if v:IsA("ClickDetector") then
+                pcall(function() fireclickdetector(v) end)
+                collected = true
+                break
+            end
+        end
+    end
+
     totalCollected = totalCollected + 1
     CountLbl.Text = "เก็บไปแล้ว: " .. totalCollected .. " ชิ้น"
-    task.wait(0.1)
+    task.wait(0.15)
 end
 
+-- ============ ON/OFF ============
 BtnToggle.MouseButton1Click:Connect(function()
     if #ITEM_NAMES == 0 then
         StatusLbl.Text = "❌ เพิ่มชื่อของก่อนนะ!"
