@@ -2,17 +2,12 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- ============ ตั้งค่า ============
 local SCAN_RATE = 0.5
-local COLLECT_RADIUS = 50  -- ระยะสแกนรอบตัว (studs)
-
--- ชื่อของที่จะเก็บ (เพิ่มเองได้)
+local COLLECT_RADIUS = 50
 local ITEM_NAMES = {}
-
 local autoCollect = false
 local totalCollected = 0
 
--- ============ GUI ============
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -26,7 +21,6 @@ Frame.ClipsDescendants = true
 Frame.Parent = ScreenGui
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
 
--- TitleBar
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 28)
 TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -69,14 +63,12 @@ BtnClose.BorderSizePixel = 0
 BtnClose.Parent = TitleBar
 Instance.new("UICorner", BtnClose).CornerRadius = UDim.new(0, 4)
 
--- Content
 local Content = Instance.new("Frame")
 Content.Size = UDim2.new(1, 0, 0, 260)
 Content.Position = UDim2.new(0, 0, 0, 30)
 Content.BackgroundTransparency = 1
 Content.Parent = Frame
 
--- ปุ่ม ON/OFF
 local BtnToggle = Instance.new("TextButton")
 BtnToggle.Size = UDim2.new(0.9, 0, 0, 32)
 BtnToggle.Position = UDim2.new(0.05, 0, 0, 5)
@@ -89,7 +81,6 @@ BtnToggle.BorderSizePixel = 0
 BtnToggle.Parent = Content
 Instance.new("UICorner", BtnToggle).CornerRadius = UDim.new(0, 7)
 
--- สถานะ
 local StatusLbl = Instance.new("TextLabel")
 StatusLbl.Size = UDim2.new(0.9, 0, 0, 18)
 StatusLbl.Position = UDim2.new(0.05, 0, 0, 44)
@@ -101,7 +92,6 @@ StatusLbl.Font = Enum.Font.Gotham
 StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
 StatusLbl.Parent = Content
 
--- เก็บไปแล้ว
 local CountLbl = Instance.new("TextLabel")
 CountLbl.Size = UDim2.new(0.9, 0, 0, 18)
 CountLbl.Position = UDim2.new(0.05, 0, 0, 62)
@@ -113,7 +103,6 @@ CountLbl.Font = Enum.Font.Gotham
 CountLbl.TextXAlignment = Enum.TextXAlignment.Left
 CountLbl.Parent = Content
 
--- ของในแมพ
 local QueueLbl = Instance.new("TextLabel")
 QueueLbl.Size = UDim2.new(0.9, 0, 0, 18)
 QueueLbl.Position = UDim2.new(0.05, 0, 0, 80)
@@ -125,7 +114,6 @@ QueueLbl.Font = Enum.Font.Gotham
 QueueLbl.TextXAlignment = Enum.TextXAlignment.Left
 QueueLbl.Parent = Content
 
--- เส้นคั่น
 local Line = Instance.new("Frame")
 Line.Size = UDim2.new(0.9, 0, 0, 1)
 Line.Position = UDim2.new(0.05, 0, 0, 104)
@@ -133,7 +121,6 @@ Line.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 Line.BorderSizePixel = 0
 Line.Parent = Content
 
--- หัวข้อ Item Names
 local ItemTitle = Instance.new("TextLabel")
 ItemTitle.Size = UDim2.new(0.9, 0, 0, 18)
 ItemTitle.Position = UDim2.new(0.05, 0, 0, 110)
@@ -145,7 +132,6 @@ ItemTitle.Font = Enum.Font.GothamBold
 ItemTitle.TextXAlignment = Enum.TextXAlignment.Left
 ItemTitle.Parent = Content
 
--- กล่องพิมพ์ชื่อของ
 local InputBox = Instance.new("TextBox")
 InputBox.Size = UDim2.new(0.7, 0, 0, 26)
 InputBox.Position = UDim2.new(0.05, 0, 0, 130)
@@ -161,7 +147,6 @@ InputBox.ClearTextOnFocus = false
 InputBox.Parent = Content
 Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0, 6)
 
--- ปุ่มเพิ่ม
 local BtnAdd = Instance.new("TextButton")
 BtnAdd.Size = UDim2.new(0.22, 0, 0, 26)
 BtnAdd.Position = UDim2.new(0.76, 0, 0, 130)
@@ -174,7 +159,6 @@ BtnAdd.BorderSizePixel = 0
 BtnAdd.Parent = Content
 Instance.new("UICorner", BtnAdd).CornerRadius = UDim.new(0, 6)
 
--- ปุ่มสแกนหาของในแมพ
 local BtnScan = Instance.new("TextButton")
 BtnScan.Size = UDim2.new(0.9, 0, 0, 26)
 BtnScan.Position = UDim2.new(0.05, 0, 0, 162)
@@ -187,7 +171,6 @@ BtnScan.BorderSizePixel = 0
 BtnScan.Parent = Content
 Instance.new("UICorner", BtnScan).CornerRadius = UDim.new(0, 6)
 
--- รายการชื่อของที่เพิ่มแล้ว
 local ListLbl = Instance.new("TextLabel")
 ListLbl.Size = UDim2.new(0.9, 0, 0, 60)
 ListLbl.Position = UDim2.new(0.05, 0, 0, 194)
@@ -206,7 +189,6 @@ lp.PaddingLeft = UDim.new(0, 5)
 lp.PaddingTop = UDim.new(0, 4)
 Instance.new("UICorner", ListLbl).CornerRadius = UDim.new(0, 6)
 
--- ปุ่มล้างรายการ
 local BtnClearList = Instance.new("TextButton")
 BtnClearList.Size = UDim2.new(0.9, 0, 0, 22)
 BtnClearList.Position = UDim2.new(0.05, 0, 0, 258)
@@ -219,53 +201,32 @@ BtnClearList.BorderSizePixel = 0
 BtnClearList.Parent = Content
 Instance.new("UICorner", BtnClearList).CornerRadius = UDim.new(0, 6)
 
--- ============ อัพเดทรายการ ============
-local function updateList()
-    if #ITEM_NAMES == 0 then
-        ListLbl.Text = "ยังไม่มีชื่อของ"
-    else
-        ListLbl.Text = table.concat(ITEM_NAMES, "\n")
-    end
-end
 -- ============ ลาก GUI (กันหลุดขอบจอ) ============
 local dragging, dragStart, startPos
 local camera = workspace.CurrentCamera
 
 TitleBar.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging   = true
-        dragStart  = inp.Position
-        startPos   = Frame.Position
+        dragging  = true
+        dragStart = inp.Position
+        startPos  = Frame.Position
     end
 end)
 
 UIS.InputChanged:Connect(function(inp)
     if not dragging then return end
     if inp.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-
-    local d       = inp.Position - dragStart
-    local screenX = camera.ViewportSize.X
-    local screenY = camera.ViewportSize.Y
-    local sizeX   = Frame.AbsoluteSize.X
-    local sizeY   = Frame.AbsoluteSize.Y
-
-    -- คำนวณตำแหน่งใหม่
-    local newX = startPos.X.Offset + d.X
-    local newY = startPos.Y.Offset + d.Y
-
-    -- จำกัดไม่ให้เกินขอบจอ
-    newX = math.clamp(newX, 0, screenX - sizeX)
-    newY = math.clamp(newY, 0, screenY - sizeY)
-
-    Frame.Position = UDim2.new(0, newX, 0, newY)
+    local d  = inp.Position - dragStart
+    local sx = camera.ViewportSize.X
+    local sy = camera.ViewportSize.Y
+    local nx = math.clamp(startPos.X.Offset + d.X, 0, sx - Frame.AbsoluteSize.X)
+    local ny = math.clamp(startPos.Y.Offset + d.Y, 0, sy - Frame.AbsoluteSize.Y)
+    Frame.Position = UDim2.new(0, nx, 0, ny)
 end)
 
 UIS.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
-
 
 -- ============ ย่อ/ขยาย ============
 local minimized = true
@@ -285,38 +246,39 @@ BtnClose.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- ============ เพิ่มชื่อของ ============
+local function updateList()
+    if #ITEM_NAMES == 0 then
+        ListLbl.Text = "ยังไม่มีชื่อของ"
+    else
+        ListLbl.Text = table.concat(ITEM_NAMES, "\n")
+    end
+end
+
 BtnAdd.MouseButton1Click:Connect(function()
     local txt = InputBox.Text
     if txt == "" then return end
-
-    -- เช็คซ้ำ
     for _, v in ipairs(ITEM_NAMES) do
         if string.lower(v) == string.lower(txt) then
             StatusLbl.Text = "มีอยู่แล้ว!"
             return
         end
     end
-
     table.insert(ITEM_NAMES, txt)
     InputBox.Text = ""
     updateList()
     StatusLbl.Text = "เพิ่ม: " .. txt
 end)
 
--- ============ ล้างรายการ ============
 BtnClearList.MouseButton1Click:Connect(function()
     ITEM_NAMES = {}
     updateList()
     StatusLbl.Text = "ล้างรายการแล้ว"
 end)
 
--- ============ สแกนหาของอัตโนมัติ ============
 BtnScan.MouseButton1Click:Connect(function()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local myPos = char.HumanoidRootPart.Position
-
     local found = {}
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") or obj:IsA("Model") then
@@ -326,45 +288,27 @@ BtnScan.MouseButton1Click:Connect(function()
             elseif obj:IsA("BasePart") then
                 pos = obj.Position
             end
-
             if pos and (myPos - pos).Magnitude <= COLLECT_RADIUS then
-                -- กรองพวก Baseplate, Terrain, ตัวละคร
                 local n = obj.Name
                 if n ~= "Baseplate" and n ~= "Part" and n ~= "HumanoidRootPart"
                     and n ~= "Head" and n ~= "Torso" and n ~= "" then
-
-                    -- เช็คว่ายังไม่มีในรายการ
                     local dup = false
-                    for _, v in ipairs(found) do
-                        if v == n then dup = true break end
-                    end
-                    for _, v in ipairs(ITEM_NAMES) do
-                        if string.lower(v) == string.lower(n) then dup = true break end
-                    end
-
-                    if not dup then
-                        table.insert(found, n)
-                    end
+                    for _, v in ipairs(found) do if v == n then dup = true break end end
+                    for _, v in ipairs(ITEM_NAMES) do if string.lower(v) == string.lower(n) then dup = true break end end
+                    if not dup then table.insert(found, n) end
                 end
             end
         end
     end
-
     if #found == 0 then
         StatusLbl.Text = "สแกนไม่เจออะไรใกล้ๆ"
     else
-        -- แสดงผลให้เลือก
-        StatusLbl.Text = "เจอ " .. #found .. " อย่าง เพิ่มเองได้เลย"
-        -- ใส่ชื่อแรกที่เจอลงกล่องให้เลย
+        StatusLbl.Text = "เจอ " .. #found .. " อย่าง"
         InputBox.Text = found[1]
-        print("[Scan] เจอ:")
-        for _, v in ipairs(found) do
-            print("  - " .. v)
-        end
+        for _, v in ipairs(found) do print("  - " .. v) end
     end
 end)
 
--- ============ หาของทุกชิ้น ============
 local function getAllItems()
     local list = {}
     for _, obj in ipairs(workspace:GetDescendants()) do
@@ -379,12 +323,8 @@ local function getAllItems()
                     end
                     if pos then
                         local dup = false
-                        for _, v in ipairs(list) do
-                            if (v.pos - pos).Magnitude < 1 then dup = true break end
-                        end
-                        if not dup then
-                            table.insert(list, {obj = obj, pos = pos})
-                        end
+                        for _, v in ipairs(list) do if (v.pos - pos).Magnitude < 1 then dup = true break end end
+                        if not dup then table.insert(list, {obj = obj, pos = pos}) end
                     end
                 end
             end
@@ -393,7 +333,6 @@ local function getAllItems()
     return list
 end
 
--- ============ เก็บของ 1 ชิ้น ============
 local function collectOne(item)
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -411,15 +350,12 @@ local function collectOne(item)
     task.wait(0.1)
 end
 
--- ============ ON/OFF ============
 BtnToggle.MouseButton1Click:Connect(function()
     if #ITEM_NAMES == 0 then
         StatusLbl.Text = "❌ เพิ่มชื่อของก่อนนะ!"
         return
     end
-
     autoCollect = not autoCollect
-
     if autoCollect then
         BtnToggle.Text = "⏹ หยุด"
         BtnToggle.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
